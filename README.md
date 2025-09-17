@@ -1,4 +1,24 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FirstFM
+
+add description
+
+## Languages and Technologies
+
+### Front-End
+- React.js  
+- Next.js  
+- TypeScript  
+- Tailwind CSS  
+- shadcn UI components  
+- Deployed on Vercel
+
+### Back-End
+- Python
+- Django
+- Node.js   
+- Google Cloud
+- Supabase
+- Docker
 
 ## Getting Started
 
