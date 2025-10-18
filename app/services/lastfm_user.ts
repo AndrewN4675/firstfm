@@ -1,4 +1,3 @@
-import axios from "axios";
 import djangoRoute from "../routes/djangoApi";
 
 export type Username = {

@@ -1,6 +1,6 @@
 'use client';
 import React, {useEffect, useState} from 'react'
-import { fetchUserInfo } from '../services/page'
+import { fetchUserInfo } from '../services/lastfm_user'
 
 interface Username {
     username: string,
