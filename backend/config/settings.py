@@ -33,7 +33,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 LAST_FM_CALLBACK_URL = "http://localhost:8000/api/lastfm/callback/"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
