@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# preprocessing data output files
+backend/*.csv
+backend/*.xml
