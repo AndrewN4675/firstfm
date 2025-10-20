@@ -17,9 +17,12 @@ OUTPUT_XML = "processed.xml"
 OUTPUT_GBA = "genres_by_artist.csv"
 OUTPUT_GBS = "genres_by_song.csv"
 
+# Genres to keep
+GENRES = ["pop", "rock", "rap", "indie", "Hip-Hop", "rnb", "alternative", "trap", "alternative rock", "k-pop", "indie rock", "electronic", "hip hop", "indie pop", "dance", "soul", "dream pop", "electropop", "classic rock", "pop rap", "metal", "folk", "Kpop", "synthpop", "pop rock", "alternative metal", "Nu Metal", "Neo-Soul", "emo", "new wave", "cloud rap", "hard rock", "shoegaze", "rage", "Grunge", "indie folk", "punk rock", "post-hardcore", "House"]
+
 # number constants
-THRESHOLD = 50
-TOP_N_TAGS = 30
+THRESHOLD = 15
+TOP_N_TAGS = len(GENRES)
 
 def stage_1_build_tracks(tracks_json):
     # create xml object
@@ -68,7 +71,13 @@ def gather_tag_counts(root):
             name = tag_elem.text
             count = int(tag_elem.attrib.get("count", "0"))
             tag_counts[name] = tag_counts.get(name, 0) + count
+
+    print(str(tag_counts))
     return tag_counts
+
+def get_sorted_tag_counts(tag_counts):
+    sorted_tag_counts = sorted(tag_counts.items(), key=lambda x: x[1], reverse=True)
+    return sorted_tag_counts
 
 def get_top_tags(tag_counts, n=TOP_N_TAGS):
     # sort by count descending and pick top n
@@ -164,6 +173,15 @@ def main():
     print("--> gather top tags & counts of tags...")
     tag_counts = gather_tag_counts(root)
     top_tags = get_top_tags(tag_counts)
+
+    with open("SORTED_TAGS.csv", "w") as sorted_tags_file:
+        for item in get_sorted_tag_counts(tag_counts):
+            sorted_tags_file.write(item[0] + "," + str(item[1]) + "\n")
+
+    print("  > Top " + str(TOP_N_TAGS) + " tags:")
+    for item in top_tags:
+        print("  - " + str(item))
+    
 
     print("--> Building artist csv...")
     artist_matrix = build_artist_genre_matrix(root, top_tags)
