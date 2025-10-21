@@ -9,20 +9,28 @@ import json
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
 
-# file location/name consts
-ARTIST_TRACKS_FILE = "../artist_top_tracks.json"
-TRACK_TAGS_FILE = "../track_tags.json"
-OUTPUT_SINGLE_XML = "processed_single.xml"
-OUTPUT_XML = "processed.xml"
-OUTPUT_GBA = "genres_by_artist.csv"
-OUTPUT_GBS = "genres_by_song.csv"
+# File Location Constants
+FI_ARTISTS = "../artist_top_tracks.json"
+FI_SONGS = "../track_tags.json"
+FO_RAW_XML = "raw_combined.xml"
+FO_CLEAN_XML = "clean_combined.xml"
+FO_GBA = "genres_by_artist.csv"
+FO_GBS = "genres_by_song.csv"
+FO_ARTIST_PKL = "artist_ids.pkl"
+FO_SONG_PKL = "song_ids.pkl"
+FO_GBA_PKL = "genres_by_artist.pkl"
+FO_GBS_PKL = "genres_by_song.pkl"
 
-# Genres to keep
-GENRES = ["pop", "rock", "rap", "indie", "Hip-Hop", "rnb", "alternative", "trap", "alternative rock", "k-pop", "indie rock", "electronic", "hip hop", "indie pop", "dance", "soul", "dream pop", "electropop", "classic rock", "pop rap", "metal", "folk", "Kpop", "synthpop", "pop rock", "alternative metal", "Nu Metal", "Neo-Soul", "emo", "new wave", "cloud rap", "hard rock", "shoegaze", "rage", "Grunge", "indie folk", "punk rock", "post-hardcore", "House"]
-
-# number constants
-THRESHOLD = 15
-TOP_N_TAGS = len(GENRES)
+# Preprocessing Behavior Constants (Change these to tune results)
+GENRES = ["pop", "rock", "rap", "indie", "Hip-Hop", "rnb", "alternative", "trap", "alternative rock", "k-pop",
+          "indie rock", "electronic", "hip hop", "indie pop", "dance", "soul", "dream pop", "electropop", "classic rock", "pop rap",
+          "metal", "folk", "Kpop", "synthpop", "pop rock", "alternative metal", "Nu Metal", "Neo-Soul", "emo", "new wave",
+          "cloud rap", "hard rock", "shoegaze", "rage", "Grunge", "indie folk", "punk rock", "post-hardcore", "House", "funk",
+          "Gangsta Rap", "dance-pop", "art pop", "alt-pop", "Reggaeton", "pop punk", "punk", "Disco", "country", "soft rock",
+          "emo rap", "jazz", "metalcore", "Neo-Psychedelia", "post-punk", "heavy metal", "Progressive rock", "hyperpop"]  # top 60 genres (not tags)
+TOP_N_GENRES = len(GENRES)  # limit number of genres?
+GENRE_THRESHOLD = 15  # what minimum rating (from last.fm) makes a song/artist count as that genre?
+SHOULD_REMOVE_NULLS = False  # should songs/artists not matching any genres be removed?
 
 def stage_1_build_tracks(tracks_json):
     # create xml object
@@ -132,66 +140,150 @@ def write_csv_pandas(filename, data_dict, top_tags, index_label):
     df.index.name = index_label
     df.to_csv(filename)
 
-def main():
-    print("--> Removing old output file...")
+# def main():
+#     print("--> Removing old output file...")
 
-    # remove old output file
-    if os.path.exists(OUTPUT_XML):
-        os.remove(OUTPUT_XML)
+#     # remove old output file
+#     if os.path.exists(OUTPUT_XML):
+#         os.remove(OUTPUT_XML)
 
-    print("--> Opening input data files...")
+#     print("--> Opening input data files...")
 
-    with open(ARTIST_TRACKS_FILE, "r") as f:
-        # load artists into python-friendly json
-        tracks_json = json.load(f)
-    with open(TRACK_TAGS_FILE, "r") as f:
-        # same here, for track tags
-        tags_json = json.load(f)
+#     with open(ARTIST_TRACKS_FILE, "r") as f:
+#         # load artists into python-friendly json
+#         tracks_json = json.load(f)
+#     with open(TRACK_TAGS_FILE, "r") as f:
+#         # same here, for track tags
+#         tags_json = json.load(f)
 
-    # build xml structure containing all songs, including necessary data
-    print("--> Reading artist top songs into xml structure...")
-    root = stage_1_build_tracks(tracks_json)
-    print("--> Reading track tags and adding tags to songs...")
-    stage_2_add_tags(root, tags_json)
+#     # build xml structure containing all songs, including necessary data
+#     print("--> Reading artist top songs into xml structure...")
+#     root = stage_1_build_tracks(tracks_json)
+#     print("--> Reading track tags and adding tags to songs...")
+#     stage_2_add_tags(root, tags_json)
 
-    print("--> Writing single-line xml...")
-    tree = ET.ElementTree(root)
-    tree.write(OUTPUT_SINGLE_XML, encoding="utf-8", xml_declaration=True)
+#     print("--> Writing single-line xml...")
+#     tree = ET.ElementTree(root)
+#     tree.write(OUTPUT_SINGLE_XML, encoding="utf-8", xml_declaration=True)
 
-    print("--> Prettifying xml...")
-    with open(OUTPUT_SINGLE_XML, "r") as OriginalXML:
-        with open(OUTPUT_XML, "w") as output:
-            temp = xml.dom.minidom.parseString(OriginalXML.read())
-            New_XML = temp.toprettyxml()
-            output.write(New_XML)
+#     print("--> Prettifying xml...")
+#     with open(OUTPUT_SINGLE_XML, "r") as OriginalXML:
+#         with open(OUTPUT_XML, "w") as output:
+#             temp = xml.dom.minidom.parseString(OriginalXML.read())
+#             New_XML = temp.toprettyxml()
+#             output.write(New_XML)
 
-    print("--> Removing old single line xml...")
-    # remove old output (single line) file
-    if os.path.exists(OUTPUT_SINGLE_XML):
-        os.remove(OUTPUT_SINGLE_XML)
+#     print("--> Removing old single line xml...")
+#     # remove old output (single line) file
+#     if os.path.exists(OUTPUT_SINGLE_XML):
+#         os.remove(OUTPUT_SINGLE_XML)
 
-    print("--> gather top tags & counts of tags...")
-    tag_counts = gather_tag_counts(root)
-    top_tags = get_top_tags(tag_counts)
+#     print("--> gather top tags & counts of tags...")
+#     tag_counts = gather_tag_counts(root)
+#     top_tags = get_top_tags(tag_counts)
 
-    with open("SORTED_TAGS.csv", "w") as sorted_tags_file:
-        for item in get_sorted_tag_counts(tag_counts):
-            sorted_tags_file.write(item[0] + "," + str(item[1]) + "\n")
+#     with open("SORTED_TAGS.csv", "w") as sorted_tags_file:
+#         for item in get_sorted_tag_counts(tag_counts):
+#             sorted_tags_file.write(item[0] + "," + str(item[1]) + "\n")
 
-    print("  > Top " + str(TOP_N_TAGS) + " tags:")
-    for item in top_tags:
-        print("  - " + str(item))
+#     print("  > Top " + str(TOP_N_TAGS) + " tags:")
+#     for item in top_tags:
+#         print("  - " + str(item))
     
 
-    print("--> Building artist csv...")
-    artist_matrix = build_artist_genre_matrix(root, top_tags)
-    write_csv_pandas(OUTPUT_GBA, artist_matrix, top_tags, "artist")
+#     print("--> Building artist csv...")
+#     artist_matrix = build_artist_genre_matrix(root, top_tags)
+#     write_csv_pandas(OUTPUT_GBA, artist_matrix, top_tags, "artist")
 
-    print("--> Building song csv...")
-    song_matrix = build_song_genre_matrix(root, top_tags)
-    write_csv_pandas(OUTPUT_GBS, song_matrix, top_tags, "song")
+#     print("--> Building song csv...")
+#     song_matrix = build_song_genre_matrix(root, top_tags)
+#     write_csv_pandas(OUTPUT_GBS, song_matrix, top_tags, "song")
 
-    print("-- Done! --")
+#     print("-- Done! --")
+
+def remove_old_output_files():
+    # [REMOVE FOR FUTURE FEATURE]
+    # old raw combined xml
+    if os.path.exists(FO_RAW_XML):
+        os.remove(FO_RAW_XML)
+
+    # old cleaned xml
+    if os.path.exists(FO_CLEAN_XML):
+        os.remove(FO_CLEAN_XML)
+
+    # artists output csv
+    if os.path.exists(FO_GBA):
+        os.remove(FO_GBA)
+    
+    # songs output csv
+    if os.path.exists(FO_GBS):
+        os.remove(FO_GBS)
+
+    # artist id pkl
+    if os.path.exists(FO_ARTIST_PKL):
+        os.remove(FO_ARTIST_PKL)
+
+    # song id pkl
+    if os.path.exists(FO_SONG_PKL):
+        os.remove(FO_SONG_PKL)
+
+    # genre-by-artist pkl
+    if os.path.exists(FO_GBA_PKL):
+        os.remove(FO_GBA_PKL)
+
+    # genre-by-song pkl
+    if os.path.exists(FO_GBS_PKL):
+        os.remove(FO_GBS_PKL)
+
+def main():
+    print("----- Starting Preprocessing... -----")
+
+    # 1.  remove old output files if they exist
+    print("--> Removing old output files...")
+    remove_old_output_files()
+
+    # 2.  read artists' songs into xml
+
+
+    # 3.  read songs into xml, combine
+
+    # 4.  using a list of just artist names, create an Encoder and id them
+
+    # 5.  using a list of just song names, create an Encoder and id them
+    
+    # 6.  Insert song ID's into song elements as an attribute `songID`
+
+    # 7.  Insert arist ID's into song elements as an attribute `artistID`
+
+    # 6.  Insert artist id into attribute of songs
+    #     (find matching artist name, insert their id: artistID)
+
+    # 4.  write raw combined xml
+
+    # 5.  clean xml
+    #     - remove unnecessary attributes
+    #       - really just need to keep name and list of genres
+    #     - remove tags from (songs and artists) that aren't in list of accepted genres
+    #     - remove (songs and artists) that don't match any accepted genres
+    #     - convert count to 1 or 0 depending on whether it satisfies the threshold
+    
+    # 6.  write cleaned, combined xml
+    
+    # 7.  Create a pandas dataframe for genre by artist
+    #     - header: name, [genre name ...]
+    #     - line by line (I'm sure there's a better way) add a row with name, then all genre matches (1 or 0)
+
+    # 8.  Create a pandas dataframe for genere by song (similar to artist)
+
+    # 9.  Write Outputs:
+    #     - genre-by-artist CSV
+    #     - genre-by-song CSV
+
+    # 10. Write .pkl's:
+    #     - Artist IDs
+    #     - Song IDs
+    #     - genre-by-artist multilabel encoder
+    #     - genre-by-song multilabel encoder
 
 if __name__ == "__main__":
     main()
