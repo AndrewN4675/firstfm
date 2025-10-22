@@ -42,7 +42,4 @@ next-env.d.ts
 
 # preprocessing data output files
 # ignore temp/debugging ones, allow real output files
-backend/*.csv
-# !backend/genres_by_artist.csv
-# !backend/genres_by_song.csv
-backend/*.xml
+backend/SORTED_TAGS.csv

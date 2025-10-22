@@ -1,7 +1,6 @@
 ### NOTE: Most of this code is based on JohnnyBoiTime's Movie NN code! Props to him
 
 import pandas as pd
-import os
 import pickle
 from sklearn.preprocessing import LabelEncoder, MultiLabelBinarizer
 from sklearn.model_selection import train_test_split
@@ -12,12 +11,11 @@ import xml.etree.ElementTree as ET
 FI_ARTISTS = "../artist_top_tracks.json"
 FI_TAGS = "../track_tags.json"
 FO_COMB_XML = "combined_data.xml"
-FO_GBA = "genres_by_artist.csv"
-FO_GBS = "genres_by_song.csv"
-FO_ARTIST_PKL = "artist_ids.pkl"
-FO_SONG_PKL = "song_ids.pkl"
-FO_GBA_PKL = "genres_by_artist.pkl"
-FO_GBS_PKL = "genres_by_song.pkl"
+FO_GBA = "genre_by_artist"
+FO_GBS = "genre_by_song"
+FO_ARTIST_ENC = "artist_labels.pkl"
+FO_SONG_ENC = "song_labels.pkl"
+FO_GENRE_ENC = "genre_labels.pkl"
 
 # ----- Preprocessing Behavior Constants (Change these to tune results) -----
 GENRES = ["pop", "rock", "rap", "indie", "Hip-Hop", "rnb", "alternative", "trap", "alternative rock", "k-pop",
@@ -27,40 +25,12 @@ GENRES = ["pop", "rock", "rap", "indie", "Hip-Hop", "rnb", "alternative", "trap"
           "Gangsta Rap", "dance-pop", "art pop", "alt-pop", "Reggaeton", "pop punk", "punk", "Disco", "country", "soft rock",
           "emo rap", "jazz", "metalcore", "Neo-Psychedelia", "post-punk", "heavy metal", "Progressive rock", "hyperpop"]  # top 60 genres (not tags)
 TOP_N_GENRES = len(GENRES)  # limit number of genres?
+GENRES = GENRES[:TOP_N_GENRES]  # truncate list based on TOP_N_GENRES
+GENRES = sorted(GENRES, key=str.lower)  # sort list for later encoding
 GENRE_THRESHOLD = 15  # what minimum rating (from last.fm) makes a song/artist count as that genre?
 SHOULD_REMOVE_NULLS = True  # should songs/artists not matching any genres be removed?
 
 # ----- File management -----
-
-def remove_old_output_files() -> None:
-    # [REMOVE FOR FUTURE FEATURE]
-    # old combined xml
-    if os.path.exists(FO_COMB_XML):
-        os.remove(FO_COMB_XML)
-
-    # artists output csv
-    if os.path.exists(FO_GBA):
-        os.remove(FO_GBA)
-    
-    # songs output csv
-    if os.path.exists(FO_GBS):
-        os.remove(FO_GBS)
-
-    # artist id pkl
-    if os.path.exists(FO_ARTIST_PKL):
-        os.remove(FO_ARTIST_PKL)
-
-    # song id pkl
-    if os.path.exists(FO_SONG_PKL):
-        os.remove(FO_SONG_PKL)
-
-    # genre-by-artist pkl
-    if os.path.exists(FO_GBA_PKL):
-        os.remove(FO_GBA_PKL)
-
-    # genre-by-song pkl
-    if os.path.exists(FO_GBS_PKL):
-        os.remove(FO_GBS_PKL)
 
 def read_json(filename: str) -> dict:
     with open(filename, "r", encoding='utf-8') as f:
@@ -245,55 +215,106 @@ def remove_null_song_genres(xml_tree):
 
 # ----- Binarization and Encoding ------
 
+### TEMPORARY, NEEDS TO BE CHANGED IN THE FUTURE
+def encode_genres_ordered(genres_input, genre_list=GENRES):
+    """
+    Takes a list of genre strings and returns a list of indices based on the order in genre_list.
+    Case-insensitive matching. Genres not found are ignored.
+
+    Args:
+      genres_input (list of str): genres to encode
+      genre_list (list of str): ordered list of allowed genres
+
+    Returns:
+      List[int]: indices corresponding to genre positions in genre_list
+    """
+    # Create mapping: lowercase genre -> index in list
+    genre_map = {g.lower(): i for i, g in enumerate(genre_list)}
+
+    encoded_indices = []
+    for g in genres_input:
+        idx = genre_map.get(g.lower())
+        if idx is not None:
+            encoded_indices.append(idx)
+    
+    return encoded_indices
+
+# ----- Splitting data -----
+
+def split_train_val_test(df, test_size=0.2, val_size=0.1, random_state=42):
+    """
+    Splits df into training, validation, and testing DataFrames.
+
+    Args:
+        df (pd.DataFrame): input data.
+        test_size (float): fraction for test split (default 0.2).
+        val_size (float): fraction of training data to use for validation (default 0.1).
+        random_state (int): seed for reproducibility.
+
+    Returns:
+        (train_df, val_df, test_df) tuple of DataFrames.
+    """
+
+    train_val_df, test_df = train_test_split(
+        df, test_size=test_size, random_state=random_state
+    )
+
+    # val_size is fraction of train_val, e.g., 0.1 means 10% of train_val → val
+    val_df, train_df = train_test_split(
+        train_val_df, test_size=1 - val_size, random_state=random_state
+    )
+
+    return train_df, val_df, test_df
+
 # ----- Main -----
 
 def main():
     print("----- Starting Preprocessing... -----")
 
-    # 1.  remove old output files if they exist
-    print("--> [0/12] Removing old output files...")
-    remove_old_output_files()
-
-    # 2.  read artist and tracks into json
+    # 1.  read artist and tracks into json
     print("--> [1/12] Reading artist songs and track tags from json files...")
     artist_tracks_json = read_json(FI_ARTISTS)
     track_tags_json = read_json(FI_TAGS)
 
-    # 3.  combine data from artist's songs and their tags into one xml
+    # 2.  combine data from artist's songs and their tags into one xml
     print("--> [2/12] Combining data into one xml tree...")
     combined_xml: ET.ElementTree = build_combined_xml(artist_tracks_json, track_tags_json)
 
     # [TODO]: Add label encoders to xml as well, for future-proofing data?
 
-    # 4.  Apply preprocessing strategies to data
+    # 3.  Apply preprocessing strategies to data
     print("--> [3/12] Applying preprocessing strategies to data to clean...")
     remove_unaccepted_tags(combined_xml)
     remove_null_song_genres(combined_xml)
 
-    # 5.  create a pandas dataframe for genre by song
+    # 4.  create a pandas dataframe for genre by song
     print("--> [4/12] Creating DataFrame for genre-by-song...")
     df_song = genre_by_song_csv(combined_xml, GENRES, GENRE_THRESHOLD)
 
-    # 6.  create a pandas df for genre by artist
+    # 5.  create a pandas df for genre by artist
     print("--> [5/12] Creating DataFrame for genre-by-artist...")
     df_artist = genre_by_artist_csv(combined_xml, GENRES, GENRE_THRESHOLD)
 
-    # 7. LabelEncode song names
+    # 6. LabelEncode song names
     print("--> [6/12] Encoding song labels...")
     song_encoder = LabelEncoder()
-    df_song["song_id"] = song_encoder.fit_transform(df_song["song"])  # Assume df_song (cols: "song", genre columns...)
+    df_song.insert(0, "song_id", song_encoder.fit_transform(df_song["song"]))
+    df_song.sort_values(by="song_id", inplace=True)
+    df_song.reset_index(drop=True, inplace=True)
 
-    # 8. LabelEncode artist names
+    # 7. LabelEncode artist names
     print("--> [7/12] Encoding artist labels...")
     artist_encoder = LabelEncoder()
-    df_artist["artist_id"] = artist_encoder.fit_transform(df_artist["artist"])  # Assume df_song ("artist", genre columns...)
+    df_artist.insert(0, "artist_id", artist_encoder.fit_transform(df_artist["artist"]))
+    df_artist.sort_values(by="artist_id", inplace=True)
+    df_artist.reset_index(drop=True, inplace=True)
 
-    # 9. Prepare genre columns list (exclude name/id)
+    # 8. Prepare genre columns list (exclude name/id)
     print("--> [8/12] Preparing df's for binarizing...")
     song_genre_cols = df_song.columns.difference(["song", "song_id"])
     artist_genre_cols = df_artist.columns.difference(["artist", "artist_id"])
 
-    # 10. Create MultiLabelBinarizer for songs
+    # 9.  Create MultiLabelBinarizer for songs
     print("--> [9/12] Creating MultiLabelBinarizer (matrix of 1's and 0's) for genre-by-song...")
     song_genre_lists = [
         [genre for genre in song_genre_cols if row[genre] == 1]
@@ -302,7 +323,7 @@ def main():
     mlb_songs = MultiLabelBinarizer()
     song_genre_matrix = mlb_songs.fit_transform(song_genre_lists)
 
-    # 11. Create MultiLabelBinarizer for artists
+    # 10. Create MultiLabelBinarizer for artists
     print("--> [10/12] Creating MultiLabelBinarizer (matrix of 1's and 0's) for genre-by-artist...")
     artist_genre_lists = [
         [genre for genre in artist_genre_cols if row[genre] == 1]
@@ -311,17 +332,38 @@ def main():
     mlb_artists = MultiLabelBinarizer()
     artist_genre_matrix = mlb_artists.fit_transform(artist_genre_lists)
 
-    # 12. Write out pkl's, csv's, and combined xml
-    print("--> [11/12] Writing output files...")
-    write_pkl(song_genre_matrix, FO_GBS_PKL)
-    write_pkl(artist_genre_matrix, FO_GBA_PKL)
+    # 11. Splitting data into training, testing, and validation sets
+    print("--> [11/12] Creating MultiLabelBinarizer (matrix of 1's and 0's) for genre-by-song...")
+    artist_training, artist_validation, artist_testing = split_train_val_test(df_artist, test_size=0.2, val_size=0.1)
+    song_training, song_validation, song_testing = split_train_val_test(df_song, test_size=0.2, val_size=0.1)
 
-    write_csv(df_song, FO_GBS)
-    write_csv(df_artist, FO_GBA)
+    # 12. Write out pkl's, csv's, and combined xml
+    print("--> [12/12] Writing output files...")
+
+    # artist full, training, testing, and validation csv's
+    write_csv(df_artist, FO_GBA + ".csv")
+    write_csv(artist_training, FO_GBA + "_training.csv")
+    write_csv(artist_validation, FO_GBA + "_validation.csv")
+    write_csv(artist_testing, FO_GBA + "_testing.csv")
+
+    # song full, training, testing, and validation csv's
+    write_csv(df_song, FO_GBS + ".csv")
+    write_csv(song_training, FO_GBS + "_training.csv")
+    write_csv(song_validation, FO_GBS + "_validation.csv")
+    write_csv(song_testing, FO_GBS + "_testing.csv")
+
+    # encoders for artist, song, and genre
+    write_pkl(artist_encoder, FO_ARTIST_ENC)
+    write_pkl(song_encoder, FO_SONG_ENC)
+
+    # shhhhh make genre encoder here
+    genre_encoder = LabelEncoder()
+    genre_encoder.fit_transform(GENRES)
+    write_pkl(genre_encoder, FO_GENRE_ENC)
 
     combined_xml.write(FO_COMB_XML, encoding="utf-8", xml_declaration=True)
 
-    print("--> [12/12] Done!")
+    print("--> Done!")
 
 if __name__ == "__main__":
     main()
