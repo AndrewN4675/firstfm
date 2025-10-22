@@ -35,7 +35,29 @@ LAST_FM_CALLBACK_URL = "http://localhost:8000/api/lastfm/callback/"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+# # For SECURE_SSL_REDIRECT
+# SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# 
+# # Security stuff
+# note: FOR SECURE_SSL_REDIRECT, IF YOU RUN IT LOCALLY ONCE,
+# YOU WILL HAVE TO CLEAR BROWSER CACHE AND HISTORY
+# TO SET IT BACK TO HTTP!
+# SECURE_SSL_REDIRECT = True # False for dev 
+
+# CSRF STUFF
+CSRF_COOKIE_SECURE = False # Set to true in prod
+CSRF_COOKIE_SAMESITE = "Lax" # Set to none in prod
+SESSION_COOKIE_SAMESITE = "Lax" # set to none in prod
+CSRF_USE_SESSIONS = True 
+SESSION_COOKIE_SECURE = False # Set to true in prod
+# SECURE_HSTS_SECONDS = 86400
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# SECURE_HSTS_PRELOAD = True
+
+ALLOWED_HOSTS = [
+    #"firstfm.vercel.app",
+    "localhost",
+]
 
 
 # Application definition
@@ -53,8 +75,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -64,6 +86,13 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    'http://127.0.0.1:3000',
+    # "https://firstfm.vercel.app/"
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    #"https://firstfm.vercel.app"
     "http://localhost:3000",
 ]
 
@@ -91,14 +120,22 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-DATABASES = {
-    'default': dj_database_url.parse(
-        os.environ["DATABASE_URL"],
-        conn_max_age=60,
-    ),
-    'OPTIONS': {'sslmode': 'require'},
-}
+# This is so we can insert a database url via an environment variable for production here
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(
+            os.environ["DATABASE_URL"],
+            conn_max_age=60,
+        ),
+        'OPTIONS': {'sslmode': 'require'},
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "build.sqlite3"
+        }
+    }
 
 
 # Password validation
