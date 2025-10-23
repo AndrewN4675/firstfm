@@ -1,4 +1,5 @@
 'use client';
+import { logIntoLastFM } from "../services/lastfm_user";
 
 export default function LoginPage() {
   return (
@@ -9,7 +10,7 @@ export default function LoginPage() {
       </div>
       <div className="flex justify-end">
         <button
-          onClick={() => {}}
+          onClick={() => logIntoLastFM().catch(console.error)}
           className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
         >
           Sign in with LastFM

@@ -31,10 +31,7 @@ def lastfm_start(request):
 
     # Return the ur; as a json, front end will handle the navigation
     # to the specified page
-    # Current redirect: app/dashboard
-    return JsonResponse({
-        "auth_url": auth_url
-    })
+    return redirect(auth_url)
 
 # Exchange token with the session key, store on database,
 # then go back to front end
@@ -55,7 +52,8 @@ def lastfm_callback(request):
         defaults={"lastfm_username": lfm_username, "sk": sk}
     )
 
-    return redirect("http://localhost:3000/dashboard")
+    # Change to vercel url when deploying
+    return redirect("https://firstfm.vercel.app/dashboard")
 
 # Verifies the logged in user and returns their info
 @login_required

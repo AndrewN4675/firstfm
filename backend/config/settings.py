@@ -31,7 +31,7 @@ DJANGO_HOST = os.getenv("DJANGO_HOST", "")
 LASTFM_API_KEY = os.getenv("LASTFM_API_KEY", "")
 LASTFM_API_SHARED_SECRET = os.getenv("LASTFM_API_SHARED_SECRET", "")
 DATABASE_URL = os.getenv("DATABASE_URL", "")
-LAST_FM_CALLBACK_URL = "http://localhost:8000/api/lastfm/callback/"
+LAST_FM_CALLBACK_URL = f"{DJANGO_HOST}/api/lastfm/callback/" # Callback for last.fm to return from auth
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
