@@ -31,7 +31,7 @@ def lastfm_start(request):
 
     # Return the ur; as a json, front end will handle the navigation
     # to the specified page
-    return redirect(auth_url)
+    return JsonResponse({"auth_url": auth_url})
 
 # Exchange token with the session key, store on database,
 # then go back to front end
