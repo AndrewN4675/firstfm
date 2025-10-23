@@ -1,9 +1,8 @@
 import axios from 'axios';
 
-
 // Route to fetch data from django
 const djangoRoute = axios.create({
-    baseURL: 'http://localhost:8000/api/',
+    baseURL: `${process.env.NEXT_PUBLIC_BASE_ROUTE}/api`,
     withCredentials: true,
 })
 
