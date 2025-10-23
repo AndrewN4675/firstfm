@@ -26,37 +26,39 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
-LASTFM_API_KEY = os.getenv("LASTFM_API_KEY")
-LASTFM_API_SHARED_SECRET = os.getenv("LASTFM_API_SHARED_SECRET")
-DATABASE_URL = os.getenv("DATABASE_URL")
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "")
+DJANGO_HOST = os.getenv("DJANGO_HOST", "")
+LASTFM_API_KEY = os.getenv("LASTFM_API_KEY", "")
+LASTFM_API_SHARED_SECRET = os.getenv("LASTFM_API_SHARED_SECRET", "")
+DATABASE_URL = os.getenv("DATABASE_URL", "")
 LAST_FM_CALLBACK_URL = "http://localhost:8000/api/lastfm/callback/"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
 # # For SECURE_SSL_REDIRECT
-# SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 # 
 # # Security stuff
 # note: FOR SECURE_SSL_REDIRECT, IF YOU RUN IT LOCALLY ONCE,
 # YOU WILL HAVE TO CLEAR BROWSER CACHE AND HISTORY
 # TO SET IT BACK TO HTTP!
-# SECURE_SSL_REDIRECT = True # False for dev 
+SECURE_SSL_REDIRECT = True # False for dev 
 
 # CSRF STUFF
-CSRF_COOKIE_SECURE = False # Set to true in prod
-CSRF_COOKIE_SAMESITE = "Lax" # Set to none in prod
-SESSION_COOKIE_SAMESITE = "Lax" # set to none in prod
+CSRF_COOKIE_SECURE = True # Set to true in prod
+CSRF_COOKIE_SAMESITE = "none" # Set to none in prod
+SESSION_COOKIE_SAMESITE = "none" # set to none in prod
 CSRF_USE_SESSIONS = True 
-SESSION_COOKIE_SECURE = False # Set to true in prod
-# SECURE_HSTS_SECONDS = 86400
-# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-# SECURE_HSTS_PRELOAD = True
+SESSION_COOKIE_SECURE = True # Set to true in prod
+SECURE_HSTS_SECONDS = 86400
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
 
 ALLOWED_HOSTS = [
-    #"firstfm.vercel.app",
-    "localhost",
+    "firstfm.vercel.app",
+     DJANGO_HOST,
+    # "localhost",
 ]
 
 
@@ -86,14 +88,14 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    'http://127.0.0.1:3000',
-    # "https://firstfm.vercel.app/"
+    # "http://localhost:3000",
+    # 'http://127.0.0.1:3000',
+    "https://firstfm.vercel.app"
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    #"https://firstfm.vercel.app"
-    "http://localhost:3000",
+    "https://firstfm.vercel.app"
+    # "http://localhost:3000",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -173,6 +175,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
