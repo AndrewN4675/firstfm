@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function Home() {
   return (
     <div className="font-sans flex flex-col flex-1 justify-between min-h-full mt-8 sm:mt-10">

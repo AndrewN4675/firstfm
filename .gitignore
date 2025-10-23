@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# preprocessing data output files
+# ignore temp/debugging ones, allow real output files
+backend/SORTED_TAGS.csv
