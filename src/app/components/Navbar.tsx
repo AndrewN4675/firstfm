@@ -1,118 +1,91 @@
-'use client';
+"use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { Menu, X, Music } from "lucide-react";
+import { useState, useEffect } from "react";
+import softwareDevelopmentLogo from "../../assets/software-development-logo.png";
 
+const navItems = [
+  { label: "Music Map", href: "music-map" },
+  { label: "Log in", href: "login" },
+];
+
+// Complete functionality of navbar with desktop / mobile views and functionality
 export default function Navbar() {
-  const [open, setOpen] = useState(false);
-  const user = false; // Placeholder for user authentication state
+  const [hamburgerOpen, setHamburgerOpen] = useState(false);
 
-  const navItems = [
-    { href: "/", label: "Home" },
-    { href: "/library", label: "Library" },
-  ];
-
-  if (!user) {
-    return (
-      <header className="w-full bg-card/80 backdrop-blur-sm border-b border-border">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <Link href="/" className="flex items-center gap-2 no-underline">
-                <span className="font-semibold text-lg">FirstFM</span>
-              </Link>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <Link
-                href="/login"
-              >
-                Log in
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
-    );
-  }
+  // move to top of screen and prevent scrolling if hamburger is opened
+  useEffect(() => {
+    if (hamburgerOpen) {
+      document.body.style.overflow = "hidden";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [hamburgerOpen]);
 
   return (
-    <header className="w-full bg-card/80 backdrop-blur-sm border-b border-border">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <>
+      <header className="fixed top-0 left-0 w-full z-50 bg-white border-b py-4 px-6 shadow">
+        <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-2 no-underline">
-              <span className="font-semibold text-lg">FirstFM</span>
+              <span className="font-semibold text-xl">FirstFM</span>
             </Link>
           </div>
 
-          <nav className="hidden md:flex items-center space-x-4">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="px-3 py-2 rounded-md text-sm hover:bg-muted/60"
-              >
-                {item.label}
+          {/* default navigation bar for wider displays */}
+          <nav className="hidden md:flex items-center space-x-8">
+            {navItems.map(({ label, href }) => (
+              <Link key={label} href={href} className="cursor-pointer">
+                {label}
               </Link>
             ))}
           </nav>
+          {/* hamburger menu on smaller screens */}
+          <button
+            className="md:hidden p-2"
+            onClick={() => setHamburgerOpen(!hamburgerOpen)}
+          >
+            {!hamburgerOpen ? (
+              <>
+                {" "}
+                {/* hamburger icon */}
+                <span className="block w-6 h-0.5 bg-black my-1.25"></span>
+                <span className="block w-6 h-0.5 bg-black my-1.25"></span>
+                <span className="block w-6 h-0.5 bg-black my-1.25"></span>
+              </>
+            ) : (
+              <div className="relative w-6 h-0.5">
+                {" "}
+                {/* x icon when open*/}
+                <span className="absolute top-0 left-0 w-7 h-0.5 bg-black transform rotate-45"></span>
+                <span className="absolute top-0 left-0 w-7 h-0.5 bg-black transform -rotate-45"></span>
+              </div>
+            )}
+          </button>
+        </div>
+      </header>
 
-          <div className="flex items-center gap-2">
-            <div className="hidden md:block">
-              <button
-                type="button"
-                aria-label="Profile"
-                className="w-9 h-9 rounded-full bg-muted/40 flex items-center justify-center text-sm font-medium"
-                // title={} placeholder for user name
-                onClick={() => {
-                  // Implement profile click functionality
-                }}
-              >
-                {/* Placeholder for user initial */}
-              </button>
-            </div>
-
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <button
-                onClick={() => setOpen((v) => !v)}
-                aria-label="Toggle menu"
-                className="p-2 rounded-md hover:bg-muted/60"
-              >
-                {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </button>
-            </div>
-          </div>
+      {/* hamburger dropdown to list the navigation items */}
+      <div
+        className={`absolute top-10 left-0 w-full h-full bg-white/85 backdrop-blur z-40 transition-all duration-250 ease-in-out
+        ${
+          hamburgerOpen
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 -translate-y-full"
+        }`}
+      >
+        <div className="w-full py-16 flex flex-col items-center space-y-8 text-xl">
+          {navItems.map(({ label, href }) => (
+            <Link key={label} href={href} className="cursor-pointer">
+              {label}
+            </Link>
+          ))}
         </div>
       </div>
-
-      {/* Mobile panel */}
-      {open && (
-        <div className="md:hidden border-t border-border bg-card/95">
-          <div className="px-4 pt-2 pb-4 space-y-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="block px-3 py-2 rounded-md text-base hover:bg-muted/60"
-              >
-                {item.label}
-              </Link>
-            ))}
-            <div className="flex items-center gap-2 px-3 py-2">
-              <button
-                onClick={() => {}} // Implement logout functionality
-                className="w-full text-left px-3 py-2 rounded-md hover:bg-muted/60"
-              >
-                Log out
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </header>
+    </>
   );
 }
