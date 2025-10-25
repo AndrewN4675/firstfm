@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@radix-ui/react-slot": "^1.2.3",
     "@react-three/drei": "^10.7.6",
     "@react-three/fiber": "^9.4.0",
     "@vercel/analytics": "^1.5.0",
