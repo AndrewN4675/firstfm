@@ -44,7 +44,6 @@ export default function Navbar() {
               </Link>
             ))}
           </nav>
-
           {/* hamburger menu on smaller screens */}
           <button
             className="md:hidden p-2"
