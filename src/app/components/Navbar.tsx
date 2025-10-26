@@ -80,7 +80,12 @@ export default function Navbar() {
       >
         <div className="w-full py-16 flex flex-col items-center space-y-8 text-xl">
           {navItems.map(({ label, href }) => (
-            <Link key={label} href={href} className="cursor-pointer">
+            <Link
+              key={label}
+              href={href}
+              className="cursor-pointer"
+              onClick={() => setHamburgerOpen(false)}
+            >
               {label}
             </Link>
           ))}
