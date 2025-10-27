@@ -31,7 +31,7 @@ DJANGO_HOST = os.getenv("DJANGO_HOST", "")
 LASTFM_API_KEY = os.getenv("LASTFM_API_KEY", "")
 LASTFM_API_SHARED_SECRET = os.getenv("LASTFM_API_SHARED_SECRET", "")
 DATABASE_URL = os.getenv("DATABASE_URL", "")
-LAST_FM_CALLBACK_URL = f"{DJANGO_HOST}/api/lastfm/callback/" # Callback for last.fm to return from auth
+LAST_FM_CALLBACK_URL = f"https://{DJANGO_HOST}/api/lastfm/callback/" # Callback for last.fm to return from auth
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -90,11 +90,11 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     # "http://localhost:3000",
     # 'http://127.0.0.1:3000',
-    "https://firstfm.vercel.app"
+    "https://firstfm.vercel.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://firstfm.vercel.app"
+    "https://firstfm.vercel.app",
     # "http://localhost:3000",
 ]
 
@@ -138,6 +138,20 @@ else:
             "NAME": BASE_DIR / "build.sqlite3"
         }
     }
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique_name_wow', 
+        'TIMEOUT': 300,                  
+        'OPTIONS': {
+            'MAX_ENTRIES': 100,       
+            'CULL_FREQUENCY': 3,       
+        }
+    }
+}
+
+RATELIMIT_USE_CACHE = 'default'
 
 
 # Password validation

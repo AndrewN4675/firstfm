@@ -9,7 +9,6 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model, login
-from .lastfm_stuff import get_session
 from .models import LastfmLinking
 
 # Create your views here.
@@ -37,6 +36,7 @@ def lastfm_start(request):
 # then go back to front end
 @ratelimit(key='ip', rate='3/m', block=False)
 def lastfm_callback(request):
+    from .lastfm_stuff import get_session
     token = request.GET.get("token")
     request.session.pop(STATE_KEY, None)
 
