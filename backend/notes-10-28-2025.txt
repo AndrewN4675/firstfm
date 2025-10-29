@@ -1,0 +1,12 @@
+songs: add artist id as well,
+
+from movie nn: userid, movieid, rating, ..., userindex, movieindex
+    userid: would be like uuid/mbid from our data
+    movideid: same here ^
+    rating: playcount, listeners
+    userIndex: encoded value from sorted id
+        - in our case, id may come from uuid/mbid
+        - or from string
+    movieindex: same here ^
+
+Add files with and without genres
