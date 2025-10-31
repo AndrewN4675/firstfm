@@ -10,3 +10,6 @@ from movie nn: userid, movieid, rating, ..., userindex, movieindex
     movieindex: same here ^
 
 Add files with and without genres
+
+genere by song: song mbid | artist mbid | playcount | listeners | [genres ...] | song enc id | artist enc id
+genre by artist: artist mbid | playcount | listeners | artist enc id
