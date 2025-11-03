@@ -2,18 +2,34 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X, Music } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "../providers/auth-store-provider";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
-  const user = false; // Placeholder for user authentication state
+  const router = useRouter();
+
+  const { username, isAuthenticated, clearUser } = useAuthStore(
+    (state) => state,
+  )
 
   const navItems = [
     { href: "/", label: "Home" },
     { href: "/library", label: "Library" },
   ];
 
-  if (!user) {
+  function signOut() {
+    clearUser();
+    try {
+      localStorage.removeItem("lastfm-store");
+    } catch (e) {
+      // ignore (server-side render or restricted storage)
+    }
+    router.push("/");
+  }
+
+  if (!isAuthenticated) {
     return (
       <header className="w-full bg-card/80 backdrop-blur-sm border-b border-border">
         <div className="w-full px-4 sm:px-6 lg:px-8">
@@ -25,11 +41,7 @@ export default function Navbar() {
             </div>
 
             <div className="flex items-center gap-4">
-              <Link
-                href="/login"
-              >
-                Log in
-              </Link>
+              <Link href="/login">Log in</Link>
             </div>
           </div>
         </div>
@@ -60,17 +72,13 @@ export default function Navbar() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <div className="hidden md:block">
+            <div className="hidden md:flex items-center gap-3">
+              <div className="text-sm">{username}</div>
               <button
-                type="button"
-                aria-label="Profile"
-                className="w-9 h-9 rounded-full bg-muted/40 flex items-center justify-center text-sm font-medium"
-                // title={} placeholder for user name
-                onClick={() => {
-                  // Implement profile click functionality
-                }}
+                onClick={signOut}
+                className="px-3 py-1 rounded-md hover:bg-muted/60 text-sm"
               >
-                {/* Placeholder for user initial */}
+                Sign out
               </button>
             </div>
 
@@ -104,10 +112,13 @@ export default function Navbar() {
             ))}
             <div className="flex items-center gap-2 px-3 py-2">
               <button
-                onClick={() => {}} // Implement logout functionality
+                onClick={() => {
+                  setOpen(false);
+                  signOut();
+                }}
                 className="w-full text-left px-3 py-2 rounded-md hover:bg-muted/60"
               >
-                Log out
+                Sign out
               </button>
             </div>
           </div>
