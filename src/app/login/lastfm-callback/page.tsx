@@ -23,7 +23,7 @@ export default function LastFmCallback() {
           // TODO: optionally fetch recent scrobbles from backend and call setScrobbles(scrobbles)
         }
 
-        router.replace("/dashboard");
+        router.replace("/music-map");
       })
       .catch((err: unknown) => {
         console.error("Last.fm callback: failed to fetch user info", err);

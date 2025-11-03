@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -14,8 +14,9 @@ export default function Navbar() {
     (state) => state,
   )
 
+  // Make Music Map the primary "home" landing page
   const navItems = [
-    { href: "/", label: "Home" },
+    { href: "/music-map", label: "Home" },
     { href: "/library", label: "Library" },
   ];
 
@@ -26,7 +27,7 @@ export default function Navbar() {
     } catch (e) {
       // ignore (server-side render or restricted storage)
     }
-    router.push("/");
+    router.push("/music-map");
   }
 
   if (!isAuthenticated) {
@@ -35,7 +36,7 @@ export default function Navbar() {
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <Link href="/" className="flex items-center gap-2 no-underline">
+              <Link href="/music-map" className="flex items-center gap-2 no-underline">
                 <span className="font-semibold text-lg">FirstFM</span>
               </Link>
             </div>
@@ -54,7 +55,7 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2 no-underline">
+            <Link href="/music-map" className="flex items-center gap-2 no-underline">
               <span className="font-semibold text-lg">FirstFM</span>
             </Link>
           </div>

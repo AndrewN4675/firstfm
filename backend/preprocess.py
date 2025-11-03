@@ -97,18 +97,30 @@ def genre_by_song_csv(xml_tree, genre_list, genre_threshold) -> pd.DataFrame:
     for song in root.findall("song"):
         song_name = song.get("name")
 
+        # read playcount and listeners (fallback to 0)
+        playcount_text = song.findtext("playcount") or "0"
+        listeners_text = song.findtext("listeners") or "0"
+        try:
+            playcount = int(playcount_text)
+        except ValueError:
+            playcount = int(float(playcount_text)) if playcount_text.replace('.', '', 1).isdigit() else 0
+        try:
+            listeners = int(listeners_text)
+        except ValueError:
+            listeners = int(float(listeners_text)) if listeners_text.replace('.', '', 1).isdigit() else 0
+
         # Initialize genre flags as 0
         genre_flags = dict.fromkeys(genres_lower, 0)
 
         tags_elem = song.find("tags")
         if tags_elem is not None:
             for tag in tags_elem.findall("tag"):
-                tag_name = tag.text.lower()
+                tag_name = (tag.text or "").lower()
                 tag_count = int(tag.attrib.get("count", "0"))
                 if tag_name in genre_flags and tag_count > genre_threshold:
                     genre_flags[tag_name] = 1
 
-        row = {"song": song_name}
+        row = {"song": song_name, "playcount": playcount, "listeners": listeners}
         row.update(genre_flags)
         song_data.append(row)
 
@@ -119,41 +131,60 @@ def genre_by_artist_csv(xml_tree, genre_list, genre_threshold) -> pd.DataFrame:
     root = xml_tree.getroot()
     genres_lower = [g.lower() for g in genre_list]
 
-    # Collect all songs per artist and accumulate genre counts
+    # Accumulate per-artist totals:
     artist_genre_counts = {}
-
-    # Count number of songs per artist
     artist_song_counts = {}
+    artist_playcount_totals = {}
+    artist_listeners_totals = {}
 
     for song in root.findall("song"):
         artist_name = song.findtext("artist")
+        if artist_name is None:
+            continue
+
+        # increment song count
         artist_song_counts[artist_name] = artist_song_counts.get(artist_name, 0) + 1
 
-    # Initialize artist genre counts dict
-    for artist in artist_song_counts:
-        artist_genre_counts[artist] = dict.fromkeys(genres_lower, 0)
+        # gather playcount and listeners for this song
+        playcount_text = song.findtext("playcount") or "0"
+        listeners_text = song.findtext("listeners") or "0"
+        try:
+            playcount = int(playcount_text)
+        except ValueError:
+            playcount = int(float(playcount_text)) if playcount_text.replace('.', '', 1).isdigit() else 0
+        try:
+            listeners = int(listeners_text)
+        except ValueError:
+            listeners = int(float(listeners_text)) if listeners_text.replace('.', '', 1).isdigit() else 0
 
-    # Accumulate genre counts per artist across their songs
-    for song in root.findall("song"):
-        artist_name = song.findtext("artist")
+        artist_playcount_totals[artist_name] = artist_playcount_totals.get(artist_name, 0) + playcount
+        artist_listeners_totals[artist_name] = artist_listeners_totals.get(artist_name, 0) + listeners
+
+        # ensure genre counts dict exists
+        if artist_name not in artist_genre_counts:
+            artist_genre_counts[artist_name] = dict.fromkeys(genres_lower, 0)
+
         tags_elem = song.find("tags")
         if tags_elem is None:
             continue
 
         for tag in tags_elem.findall("tag"):
-            tag_name = tag.text.lower()
+            tag_name = (tag.text or "").lower()
             tag_count = int(tag.attrib.get("count", "0"))
-
             if tag_name in genres_lower:
                 artist_genre_counts[artist_name][tag_name] += tag_count
 
-    # Now create rows applying threshold scaled by # songs of artist
+    # Build rows with scaled threshold and totals
     artist_data = []
     for artist, genre_counts in artist_genre_counts.items():
-        scaled_threshold = genre_threshold * artist_song_counts[artist]
+        scaled_threshold = genre_threshold * artist_song_counts.get(artist, 1)
         genre_flags = {g: int(count > scaled_threshold) for g, count in genre_counts.items()}
 
-        row = {"artist": artist}
+        row = {
+            "artist": artist,
+            "playcount": artist_playcount_totals.get(artist, 0),
+            "listeners": artist_listeners_totals.get(artist, 0),
+        }
         row.update(genre_flags)
         artist_data.append(row)
 
@@ -301,6 +332,8 @@ def main():
     df_song.insert(0, "song_id", song_encoder.fit_transform(df_song["song"]))
     df_song.sort_values(by="song_id", inplace=True)
     df_song.reset_index(drop=True, inplace=True)
+    # DROP song name (keep id)
+    df_song.drop(columns=["song"], inplace=True)
 
     # 7. LabelEncode artist names
     print("--> [7/12] Encoding artist labels...")
@@ -308,11 +341,13 @@ def main():
     df_artist.insert(0, "artist_id", artist_encoder.fit_transform(df_artist["artist"]))
     df_artist.sort_values(by="artist_id", inplace=True)
     df_artist.reset_index(drop=True, inplace=True)
+    # DROP artist name (keep id)
+    df_artist.drop(columns=["artist"], inplace=True)
 
     # 8. Prepare genre columns list (exclude name/id)
     print("--> [8/12] Preparing df's for binarizing...")
-    song_genre_cols = df_song.columns.difference(["song", "song_id"])
-    artist_genre_cols = df_artist.columns.difference(["artist", "artist_id"])
+    song_genre_cols = df_song.columns.difference(["song", "song_id", "playcount", "listeners"])
+    artist_genre_cols = df_artist.columns.difference(["artist", "artist_id", "playcount", "listeners"])
 
     # 9.  Create MultiLabelBinarizer for songs
     print("--> [9/12] Creating MultiLabelBinarizer (matrix of 1's and 0's) for genre-by-song...")
@@ -364,6 +399,23 @@ def main():
     combined_xml.write(FO_COMB_XML, encoding="utf-8", xml_declaration=True)
 
     print("--> Done!")
+
+    # DEBUG: to check encoders and binarizers
+    # # after fitting encoders
+    # print("song encoder classes (index -> song):")
+    # for i, cls in enumerate(song_encoder.classes_):
+    #     print(f"{i}: {cls}")
+
+    # print("\nartist encoder classes (index -> artist):")
+    # for i, cls in enumerate(artist_encoder.classes_):
+    #     print(f"{i}: {cls}")
+
+    # # If using LabelEncoder for GENRES:
+    # print("genre encoder classes:", genre_encoder.classes_)
+
+    # # If using MultiLabelBinarizer:
+    # print("mlb_songs classes (columns order):", mlb_songs.classes_)
+    # print("mlb_artists classes (columns order):", mlb_artists.classes_)
 
 if __name__ == "__main__":
     main()
