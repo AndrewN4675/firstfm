@@ -5,7 +5,7 @@ import torch.nn.functional as F
 # basic neural network model for music recommendations
 
 # inherits attributes from nn.Module
-class ArtistRecModel(nn.Module):
+class ArtistSongRecModel(nn.Module):
     def __init__(self, numSongs, numArtists, numGenres, songArtistEmbedSize, genreEmbedSize, HLSize): #, dropout=0.5):
         super().__init__() # initialize parent class attributes first
         
