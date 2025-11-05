@@ -20,11 +20,8 @@ export default function GenreSearch({
     if (!searchTerm) return [];
 
     // return the first 3 results from the record based on a cleaned (alphanum) user input
-    return allGenres
-      .filter((g) =>
-        g.name.replace(/[^a-zA-Z0-9]/g, "").includes(searchTerm.toLowerCase())
-      )
-      .slice(0, 3);
+    return allGenres.filter((g) =>
+      g.name.toLowerCase().includes(searchTerm.toLowerCase())).slice(0, 3);
   }, [searchTerm]);
 
   return (
