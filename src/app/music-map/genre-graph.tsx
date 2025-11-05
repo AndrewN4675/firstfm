@@ -13,6 +13,45 @@ import GenreSearch from "./genre-search";
 const radius = 0.8;
 const circleGeo = new THREE.CircleGeometry(radius, 32);
 
+function CameraController({ targetGenre }: { targetGenre: Genre | null }) {
+  const { camera } = useThree();
+  const controlsRef = useRef<any>(null);
+
+  useFrame(() => {
+    if (targetGenre && controlsRef.current) {
+      // Calculate target position (move camera back from the node)
+      const targetPos = new THREE.Vector3(
+        targetGenre.x,
+        targetGenre.y,
+        targetGenre.z + 10 // offset camera behind the node
+      );
+
+      // Smoothly interpolate camera position
+      camera.position.lerp(targetPos, 0.05);
+
+      // Update controls target to focus on the node
+      const focusPoint = new THREE.Vector3(
+        targetGenre.x,
+        targetGenre.y,
+        targetGenre.z
+      );
+      controlsRef.current.target.lerp(focusPoint, 0.05);
+      controlsRef.current.update();
+    }
+  });
+
+  return (
+    <OrbitControls
+      ref={controlsRef}
+      enablePan
+      enableZoom
+      enableRotate
+      maxDistance={1000}
+      minDistance={0}
+    />
+  );
+}
+
 function GenreNode({ genre }: { genre: Genre }) {
   const [hovered, setHovered] = useState(false);
   const meshReference = useRef<THREE.Mesh>(null);
@@ -122,7 +161,8 @@ function Connections({
 
 export default function GenreGraph() {
   const [nodeMap, setNodeMap] = useState<Record<string, Genre>>({}); // record (hash table) for faster indexing for search
-
+  const [targetGenre, setTargetGenre] = useState<Genre | null>(null);
+  
   useEffect(() => {
     Papa.parse("genre_coords.csv", {
       download: true,
@@ -171,7 +211,16 @@ export default function GenreGraph() {
       {/* overlay for the search bar and random seek button */}
       <div className="absolute top-4 right-4 flex gap-2 z-10 bg-white/80 p-2 rounded-lg shadow">
         {/* TODO: placeholder onSelect for now, will move camera to node */}
-        <GenreSearch nodeMap={nodeMap} onSelect={(name: string) => {}} />
+        <GenreSearch
+          nodeMap={nodeMap}
+          onSelect={(name: string) => {
+            const genre = nodeMap[name];
+            if (genre) {
+              setTargetGenre(genre);
+              setTimeout(() => setTargetGenre(null), 5000);
+            }
+          }}
+        />
         <Button variant="outline">Random</Button>
       </div>
 
@@ -192,13 +241,8 @@ export default function GenreGraph() {
         <ambientLight intensity={0.6} />
         <Connections nodes={nodeMap} threshold={20} />
         {renderedNodes}
-        <OrbitControls
-          enablePan
-          enableZoom
-          enableRotate
-          maxDistance={1000}
-          minDistance={50}
-        />
+
+        <CameraController targetGenre={targetGenre} />
 
         <Text visible={false}>
           dummy text to load font shader to fix flashing
