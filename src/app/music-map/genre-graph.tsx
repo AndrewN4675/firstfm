@@ -6,7 +6,7 @@ import { OrbitControls, Text } from "@react-three/drei";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import Papa from "papaparse";
-import { Genre } from "../lib/types";
+import { Genre } from "./types";
 import GenreSearch from "./genre-search";
 
 // circle geometries, created once and reused for all nodes
@@ -162,7 +162,7 @@ function Connections({
 export default function GenreGraph() {
   const [nodeMap, setNodeMap] = useState<Record<string, Genre>>({}); // record (hash table) for faster indexing for search
   const [targetGenre, setTargetGenre] = useState<Genre | null>(null);
-  
+
   useEffect(() => {
     Papa.parse("genre_coords.csv", {
       download: true,

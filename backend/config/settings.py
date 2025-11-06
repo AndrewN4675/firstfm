@@ -14,6 +14,7 @@ from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 import os
+from urllib.parse import urlparse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -33,33 +34,60 @@ LASTFM_API_SHARED_SECRET = os.getenv("LASTFM_API_SHARED_SECRET", "")
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 LAST_FM_CALLBACK_URL = f"{DJANGO_HOST}/api/lastfm/callback/" # Callback for last.fm to return from auth
 
+# Frontend host used for post-auth redirects. Configurable so dev vs
+# prod can use different hostnames. Defaults to the Vercel production URL.
+FRONTEND_HOST = os.getenv("FRONTEND_HOST", "https://firstfm.vercel.app")
+
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+# Allow enabling DEBUG via environment for local development only.
+DJANGO_DEBUG = os.getenv("DJANGO_DEBUG", "False")
+DEBUG = DJANGO_DEBUG.lower() in ("1", "true", "yes")
 
-# # For SECURE_SSL_REDIRECT
+# For SECURE_SSL_REDIRECT
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-# 
-# # Security stuff
-# note: FOR SECURE_SSL_REDIRECT, IF YOU RUN IT LOCALLY ONCE,
-# YOU WILL HAVE TO CLEAR BROWSER CACHE AND HISTORY
-# TO SET IT BACK TO HTTP!
-SECURE_SSL_REDIRECT = True # False for dev 
 
-# CSRF STUFF
-CSRF_COOKIE_SECURE = True # Set to true in prod
-CSRF_COOKIE_SAMESITE = "none" # Set to none in prod
-SESSION_COOKIE_SAMESITE = "none" # set to none in prod
-CSRF_USE_SESSIONS = True 
-SESSION_COOKIE_SECURE = True # Set to true in prod
-SECURE_HSTS_SECONDS = 86400
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
+# Redirect HTTP to HTTPS in production; in DEBUG leave as False so dev server
+# doesn't attempt redirects to HTTPS (which the built-in server can't handle).
+SECURE_SSL_REDIRECT = bool(DEBUG) == False
 
-ALLOWED_HOSTS = [
-    "firstfm.vercel.app",
-     DJANGO_HOST,
-    # "localhost",
-]
+# CSRF / cookie security
+CSRF_USE_SESSIONS = True
+if DEBUG:
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SAMESITE = "Lax"
+    # disable HSTS locally
+    SECURE_HSTS_SECONDS = 0
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
+else:
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = "None"
+    SESSION_COOKIE_SAMESITE = "None"
+    SECURE_HSTS_SECONDS = 86400
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+
+# Build ALLOWED_HOSTS robustly.
+allowed = {"firstfm.vercel.app"}
+
+# If DJANGO_HOST is set, add its hostname portion.
+if DJANGO_HOST:
+    try:
+        parsed = urlparse(DJANGO_HOST)
+        host = parsed.hostname or DJANGO_HOST
+        allowed.add(host)
+    except Exception:
+        allowed.add(DJANGO_HOST)
+
+# Always allow localhost in development/debug mode
+if DEBUG:
+    allowed.update({"localhost", "127.0.0.1"})
+
+ALLOWED_HOSTS = list(allowed)
 
 
 # Application definition
@@ -87,16 +115,14 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    # "http://localhost:3000",
-    # 'http://127.0.0.1:3000',
-    "https://firstfm.vercel.app"
-]
+# CORS / CSRF trusted origins.
+frontend_origins = [FRONTEND_HOST]
+if DEBUG:
+    frontend_origins.extend(["http://localhost:3000", "http://127.0.0.1:3000"])
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://firstfm.vercel.app"
-    # "http://localhost:3000",
-]
+CORS_ALLOWED_ORIGINS = frontend_origins
+
+CSRF_TRUSTED_ORIGINS = frontend_origins
 
 CORS_ALLOW_CREDENTIALS = True
 

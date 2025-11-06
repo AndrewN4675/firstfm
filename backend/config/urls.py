@@ -16,7 +16,6 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from musicRecommendationService.views import lastfm_start, lastfm_callback
 
 urlpatterns = [
     path('admin/', admin.site.urls),

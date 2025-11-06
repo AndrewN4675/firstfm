@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";
-import { Genre } from "../lib/types";
+import { Genre } from "./types";
 import { Search } from "lucide-react";
 
 export default function GenreSearch({
@@ -34,7 +34,7 @@ export default function GenreSearch({
         onChange={(e) => setSearchTerm(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
-            onSelect(searchTerm); // attempyt a search based on the users input field
+            onSelect(searchTerm); // attempt a search based on the users input field
             setSearchTerm("");
           }
         }}
