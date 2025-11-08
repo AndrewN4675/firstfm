@@ -3,17 +3,15 @@ import torch
 from torch.utils.data import Dataset
 
 # Turn indexes into tensors
-class RatingsDataset(Dataset):
-
+class TrainTestVal(Dataset):
 
     # read csv
-    def __init__(self, songsCSV, artistsCSV, songPickle, artistPickle, genrePickle):
+    def __init__(self, trainValTestCSV, songPickle, artistPickle, genrePickle):
 
         # Get info from the csvs for later
-        self.ratingsDataFrame = pd.read_csv(songsCSV)
-        self.moviesDataFrame = pd.read_csv(artistsCSV)
+        self.trainTestValDataFrame = pd.read_csv(trainValTestCSV)
 
-        # Grab the serialized information for the genres, user ratings, and movies
+        # Grab the serialized information for the genres, user ratings, and artists
         with open(genrePickle, "rb") as file:
             self.genreLE = pickle.load(file)
 
@@ -24,29 +22,28 @@ class RatingsDataset(Dataset):
             self.artistLE = pickle.load(file)
 
         # Map the human understandable information to what the network understands
-        self.ratingsDataFrame["songIndex"] = self.songLE.transform(self.ratingsDataFrame.songID)
-        self.ratingsDataFrame["artistIndex"] = self.artistLE.transform(self.ratingsDataFrame.artistID)
-
-        # Merge the movies, ratings, and genres into one dataframe
-        combinedDF = self.ratingsDataFrame.merge(self.moviesDataFrame, on="artistID", how="left")
+        self.trainTestValDataFrame["songIndex"] = self.songLE.transform(self.trainTestValDataFrame.song_mbid)
+        self.trainTestValDataFrame["artistIndex"] = self.artistLE.transform(self.trainTestValDataFrame.artist_mbid)
 
         # Tensorize the pickled information to insert into the network
-        self.songIndex = torch.tensor(combinedDF.songIndex.values, dtype=torch.long)
-        self.artistIndex = torch.tensor(combinedDF.artistIndex.values, dtype=torch.long)
-        self.ratings = torch.tensor(combinedDF.rating.values, dtype=torch.float)
+        self.songIndex = torch.tensor(self.trainTestValDataFrame.songIndex.values, dtype=torch.long)
+        self.artistIndex = torch.tensor(self.trainTestValDataFrame.artistIndex.values, dtype=torch.long)
+        self.playcounts = torch.tensor(self.trainTestValDataFrame.playcount.values, dtype=torch.float)
+        self.listeners = torch.tensor(self.trainTestValDataFrame.listeners.values, dtype=torch.float)
         genreColumns = list(self.genreLE.classes_)
-        self.genreValues = torch.tensor(combinedDF[genreColumns].values, dtype=torch.float)
+        self.genreValues = torch.tensor(self.trainTestValDataFrame[genreColumns].values, dtype=torch.float)
         
 
     # Get length of dataset
     def __len__(self):
-        return len(self.ratings)
+        return len(self.songIndex)
     
-    # Get a specific movie 
+    # Get a specific song/artist
     def __getitem__(self, idx):
         return (
             self.songIndex[idx],
             self.artistIndex[idx],
-            self.ratings[idx],
+            self.playcounts[idx],
+            self.listeners[idx],
             self.genreValues[idx]
         )
