@@ -140,7 +140,7 @@ def recommendationSystemTest(song_mbid: str, k: int = 5):
     # --- Find genre overlap ---
     overlappingGenres = (genreTensor * genreQuery).sum(dim=1)   
     # --- Mask: require at least `numGenres` shared genres ---
-    sharedMask = overlappingGenres >= 3
+    sharedMask = overlappingGenres >= 2
     calcSimilarity[~sharedMask] = -1.0  
     # --- Top-k recommendations ---
     topVals, topIdx = torch.topk(calcSimilarity, k) 

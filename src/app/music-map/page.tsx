@@ -3,8 +3,8 @@ import GenreGraph from "./genre-graph";
 
 export default function MusicMap() {
   return (
-    <div className="h-full w-full">
-      <div className="h-[90vh] w-full border-b border-[#282828]">
+    <div className="h-screen w-full flex flex-col">
+      <div className="flex-1 w-full">
         <GenreGraph />
       </div>
     </div>

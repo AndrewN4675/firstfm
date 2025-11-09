@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";
-import { Genre } from "../lib/types";
+import { Genre } from "./types";
 import { Search } from "lucide-react";
 
 export default function GenreSearch({
@@ -20,11 +20,8 @@ export default function GenreSearch({
     if (!searchTerm) return [];
 
     // return the first 3 results from the record based on a cleaned (alphanum) user input
-    return allGenres
-      .filter((g) =>
-        g.name.replace(/[^a-zA-Z0-9]/g, "").includes(searchTerm.toLowerCase())
-      )
-      .slice(0, 3);
+    return allGenres.filter((g) =>
+      g.name.toLowerCase().includes(searchTerm.toLowerCase())).slice(0, 3);
   }, [searchTerm]);
 
   return (
@@ -37,7 +34,7 @@ export default function GenreSearch({
         onChange={(e) => setSearchTerm(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
-            onSelect(searchTerm); // attempyt a search based on the users input field
+            onSelect(searchTerm); // attempt a search based on the users input field
             setSearchTerm("");
           }
         }}

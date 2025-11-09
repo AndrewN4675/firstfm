@@ -52,8 +52,11 @@ def lastfm_callback(request):
         defaults={"lastfm_username": lfm_username, "sk": sk}
     )
 
-    # Change to vercel url when deploying
-    return redirect("https://firstfm.vercel.app/dashboard")
+    # Redirect the browser back to the frontend so the client can finalize
+    # authentication and read session-backed user info.
+    frontend = getattr(settings, "FRONTEND_HOST", "https://firstfm.vercel.app")
+    frontend = frontend.rstrip('/')
+    return redirect(f"{frontend}/login/lastfm-callback")
 
 # Verifies the logged in user and returns their info
 @login_required
