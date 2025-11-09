@@ -71,12 +71,21 @@ backendDir = Path(__file__).resolve().parent.parent
 songsDirectory = backendDir / "proccsedData" / "songs"
 
 songCSV = songsDirectory / "genre_by_song.csv"
+songsArtistsNames = songsDirectory / "song_artist_mbid_genre.csv"
 
 songs = pd.read_csv(songCSV)
+mbidToSongArtistName = pd.read_csv(songsArtistsNames)
+
 
 songPickle   = os.path.join(projectRoot, "proccsedData", "pickles", "song_labels.pkl")
 artistPickle = os.path.join(projectRoot, "proccsedData", "pickles", "artist_labels.pkl")
 genrePickle  = os.path.join(projectRoot, "proccsedData", "pickles", "genre_labels.pkl")
+
+songIDToTitle = dict(zip(mbidToSongArtistName.song_mbid, mbidToSongArtistName.song_name))
+titleToSongID = dict(zip(mbidToSongArtistName.song_name, mbidToSongArtistName.song_mbid))
+songIdToArtist = dict(zip(mbidToSongArtistName.song_mbid, mbidToSongArtistName.artist_name))
+
+
 
 trainedModel = os.path.join(projectRoot, "musicModel", "models", "movierec.pth")
 
@@ -120,11 +129,12 @@ model.load_state_dict(state)
 model.eval()
 
 
-# Adjust attribute name if your model uses a different one (e.g., model.song_emb)
 songEmbedds = model.songEmbedding.weight.detach().cpu()
-songEmbedds = F.normalize(songEmbedds, dim=1)  # cosine-friendly
+songEmbedds = F.normalize(songEmbedds, dim=1)
 
-def recommendationSystemTest(song_mbid: str, k: int = 5):
+def recommendationSystemTest(songName: str, k: int = 5):
+
+    song_mbid = titleToSongID[songName]
 
     try:
         index = int(songEncoder.transform([song_mbid])[0])
@@ -133,20 +143,19 @@ def recommendationSystemTest(song_mbid: str, k: int = 5):
     # --- Cosine similarity between embeddings ---
     queryVector = songEmbedds[index].unsqueeze(0).to(device)
     calcSimilarity = F.cosine_similarity(queryVector, songEmbedds.to(device))
-    calcSimilarity[index] = -1.0                 # optional: exclude the query itself   
-    # --- Genre info ---
-    genreQuery = genreTensor[index]              # shape [G]
-    
-    # --- Find genre overlap ---
+    calcSimilarity[index] = -1.0               
+
+    genreQuery = genreTensor[index]              
+
     overlappingGenres = (genreTensor * genreQuery).sum(dim=1)   
-    # --- Mask: require at least `numGenres` shared genres ---
+ 
     sharedMask = overlappingGenres >= 2
     calcSimilarity[~sharedMask] = -1.0  
-    # --- Top-k recommendations ---
+
     topVals, topIdx = torch.topk(calcSimilarity, k) 
-    # Return MBIDs (or titles if you have them mapped)
+ 
     return [
-        (indexToSongMBID[i.item()], topVals[j].item())
+        (songIDToTitle.get(indexToSongMBID[i.item()]), songIdToArtist.get(indexToSongMBID[i.item()]), topVals[j].item())
         for j, i in enumerate(topIdx)
     ]
 
