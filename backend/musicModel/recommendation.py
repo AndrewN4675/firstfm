@@ -7,65 +7,7 @@ from pathlib import Path
 import torch.nn.functional as F
 from model import ArtistSongRecModel
 
-
-"""
-# --- paths ---
-currentDirectory = os.path.dirname(os.path.abspath(__file__))
-projectRoot = os.path.abspath(os.path.join(currentDirectory, os.pardir))
-backendDir = Path(__file__).resolve().parent.parent
-songsDirectory = backendDir / "proccsedData" / "songs"
-
-songPickle   = os.path.join(projectRoot, "proccsedData", "pickles", "song_labels.pkl")
-artistPickle = os.path.join(projectRoot, "proccsedData", "pickles", "artist_labels.pkl")
-genrePickle  = os.path.join(projectRoot, "proccsedData", "pickles", "genre_labels.pkl")
-
-trainedModel = os.path.join(projectRoot, "musicModel", "models", "movierec.pth")
-
-# --- label encoder: MBID <-> index ---
-with open(songPickle, "rb") as f:
-    songEncoder = pickle.load(f)
-
-classes = songEncoder.classes_  # np.array of MBIDs; index i corresponds to embedding row i
-indexToSongMBID = {i: classes[i] for i in range(len(classes))}  # optional lookup
-
-# --- model ---
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = ArtistSongRecModel(
-    numSongs=4934, numArtists=1055, numGenres=58,
-    songArtistEmbedSize=32, genreEmbedSize=8, HLSize=64
-).to(device)
-
-state = torch.load(trainedModel, map_location=device)
-model.load_state_dict(state)
-model.eval()
-
-# get normalized song embeddings
-with torch.no_grad():
-    # Adjust attribute name if your model uses a different one (e.g., model.song_emb)
-    songEmbeds = model.songEmbedding.weight.detach().cpu()
-    songEmbeds = F.normalize(songEmbeds, dim=1)  # cosine-friendly
-
-def recommendationSystemTest(song_mbid: str, k: int = 5):
-    Return top-k similar songs by MBID using cosine similarity in embedding space.
-    # Get the encoder index for this MBID
-    try:
-        idx = int(songEncoder.transform([song_mbid])[0])
-    except Exception:
-        raise KeyError(f"MBID not found in encoder: {song_mbid}")
-
-    with torch.no_grad():
-        q = songEmbeds[idx].unsqueeze(0)                        # (1, d)
-        sims = F.cosine_similarity(q, songEmbeds, dim=1)        # (N,)
-        sims[idx] = -1.0                                        # exclude the query itself
-        top_vals, top_idx = torch.topk(sims, k)
-
-    # map back to MBIDs
-    recs = [(indexToSongMBID[i.item()], float(top_vals[j].item())) for j, i in enumerate(top_idx)]
-    return recs
-
-"""
-
-# Create paths to files
+# File paths
 currentDirectory = os.path.dirname(os.path.abspath(__file__))
 projectRoot = os.path.abspath(os.path.join(currentDirectory, os.pardir))
 backendDir = Path(__file__).resolve().parent.parent
