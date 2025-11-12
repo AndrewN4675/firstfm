@@ -21,10 +21,6 @@ def main():
     validation = songsDirectory / "genre_by_song_val.csv"
     testing = songsDirectory / "genre_by_song_test.csv"
 
-    ""
-
-
-    # 
     songPickle = os.path.join(projectRoot, "proccsedData", "pickles", "song_labels.pkl")
     artistPickle = os.path.join(projectRoot, "proccsedData", "pickles", "artist_labels.pkl")
     genrePickle = os.path.join(projectRoot, "proccsedData", "pickles", "genre_labels.pkl")

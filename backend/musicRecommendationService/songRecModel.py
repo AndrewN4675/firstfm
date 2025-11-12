@@ -5,7 +5,7 @@ import numpy as np
 import os
 from pathlib import Path
 import torch.nn.functional as F
-from model import ArtistSongRecModel
+from musicModel.model import ArtistSongRecModel
 
 # File paths
 currentDirectory = os.path.dirname(os.path.abspath(__file__))
@@ -70,7 +70,7 @@ songEmbedds = model.songEmbedding.weight.detach().cpu()
 songEmbedds = F.normalize(songEmbedds, dim=1)
 
 
-def recommendationSystemTest(songName: str, k: int = 5):
+def musicRecommendationSystem(songName: str, k: int = 5):
 
     # Convert the song name to the mbid so we can just
     # put in th song title
