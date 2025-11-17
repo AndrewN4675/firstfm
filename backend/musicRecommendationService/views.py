@@ -7,12 +7,9 @@ from rest_framework.views import APIView
 from django.middleware.csrf import get_token
 from django.conf import settings
 from django.utils.decorators import method_decorator
-from django.shortcuts import render
-from django.core.cache import cache
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model, login, logout
-from .lastfm_stuff import get_session
 from .models import LastfmLinking
 from .songRecModel import musicRecommendationSystem
 
