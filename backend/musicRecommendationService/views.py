@@ -1,7 +1,7 @@
 import secrets
 from urllib.parse import urlencode
 from django_ratelimit.decorators import ratelimit
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_http_methods
 from django.shortcuts import redirect
 from rest_framework.views import APIView
 from django.middleware.csrf import get_token
@@ -116,6 +116,7 @@ def csrfTokenView(request):
     return JsonResponse({'csrfToken': token})
 
 # Logout endpoint to properly clear Django session
+@require_http_methods(['POST'])
 def logout_view(request):
     logout(request)
     return JsonResponse({'success': True})
