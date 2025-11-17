@@ -8,7 +8,7 @@ from django.conf import settings
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import get_user_model, login
+from django.contrib.auth import get_user_model, login, logout
 from .lastfm_stuff import get_session
 from .models import LastfmLinking
 
@@ -72,3 +72,8 @@ def csrfTokenView(request):
     print("CSRF TOKEN!!!!")
     token = get_token(request)
     return JsonResponse({'csrfToken': token})
+
+# Logout endpoint to properly clear Django session
+def logout_view(request):
+    logout(request)
+    return JsonResponse({'success': True})

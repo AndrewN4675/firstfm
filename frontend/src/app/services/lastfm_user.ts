@@ -15,3 +15,7 @@ export async function logIntoLastFM() {
     const { data } = await csrfRoute.get('lastfm/start/');
     window.location.assign(data.auth_url);
 }
+
+export async function logoutUser() {
+    await djangoRoute.get('logout/');
+}

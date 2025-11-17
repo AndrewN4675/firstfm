@@ -14,21 +14,28 @@ export default function LastFmCallback() {
   useEffect(() => {
     let mounted = true;
 
-    fetchUserInfo()
-      .then((data: Username) => {
+    const handleCallback = async () => {
+      try {
+        const data = await fetchUserInfo();
+
         if (!mounted) return;
 
         if (data?.username) {
           setUser(data.username);
           // TODO: optionally fetch recent scrobbles from backend and call setScrobbles(scrobbles)
+          router.push("/music-map");
+        } else {
+          router.replace("/login");
         }
-
-        router.replace("/music-map");
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         console.error("Last.fm callback: failed to fetch user info", err);
-        router.replace("/login");
-      });
+        if (mounted) {
+          router.replace("/login");
+        }
+      }
+    };
+
+    handleCallback();
 
     return () => {
       mounted = false;
