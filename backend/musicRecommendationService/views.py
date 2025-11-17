@@ -3,16 +3,57 @@ from urllib.parse import urlencode
 from django_ratelimit.decorators import ratelimit
 from django.views.decorators.http import require_GET
 from django.shortcuts import redirect
+from rest_framework.views import APIView
 from django.middleware.csrf import get_token
 from django.conf import settings
+from django.utils.decorators import method_decorator
 from django.shortcuts import render
+from django.core.cache import cache
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model, login, logout
 from .lastfm_stuff import get_session
 from .models import LastfmLinking
+from .songRecModel import musicRecommendationSystem
+
 
 # Create your views here.
+@method_decorator(
+    ratelimit(key='ip', rate='5/m', block=False),
+    name='dispatch'
+)
+class RecommendationView(APIView):
+
+    def dispatch(self, request, *args, **kwargs):
+       
+        if getattr(request, 'limited', False):
+            return JsonResponse(
+                {'detail': 'Too many requests sent!'},
+                status=429
+            )
+        
+        return super().dispatch(request, *args, **kwargs)
+
+
+    def get(self, request):
+        data = []
+        songTitle = request.query_params.get('songTitle')
+        k = int(request.query_params.get('k', 5))
+
+        recommendation = musicRecommendationSystem(songTitle, k)
+
+        for index, (song) in enumerate(recommendation, start=1):
+
+            data.append({
+                "id": index,
+                "songTitle:": song,
+            })
+        
+        return JsonResponse(data,
+                            safe=False,
+                            json_dumps_params={'indent': 2}
+                            )
+
 
 User = get_user_model()
 STATE_KEY = "lfm_state"
@@ -37,6 +78,7 @@ def lastfm_start(request):
 # then go back to front end
 @ratelimit(key='ip', rate='3/m', block=False)
 def lastfm_callback(request):
+    from .lastfm_stuff import get_session
     token = request.GET.get("token")
     request.session.pop(STATE_KEY, None)
 

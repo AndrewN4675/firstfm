@@ -21,6 +21,7 @@ FO_GBS = "genre_by_song"
 FO_ARTIST_ENC = "artist_labels.pkl"
 FO_SONG_ENC = "song_labels.pkl"
 FO_GENRE_ENC = "genre_labels.pkl"
+FO_SONG_ARTIST_MBID_GENRE = "song_artist_mbid_genre.csv"
 
 # ----- Preprocessing Behavior Constants (Change these to tune results) -----
 GENRES = ["pop", "rock", "rap", "indie", "Hip-Hop", "rnb", "alternative", "trap", "alternative rock", "k-pop",
@@ -450,6 +451,47 @@ def split_df_without_genres(df: pd.DataFrame,
     return split_train_val_test(df_no_genres, test_size=test_size, val_size=val_size,
                                 random_state=random_state)
 
+def make_artist_song_mbid_genres(artists: dict[str, Artist], songs_df: pd.DataFrame, song_enc: LabelEncoder, artist_enc: LabelEncoder) -> pd.DataFrame:
+    song_data = []
+
+    for row in songs_df.values:
+        artist_name = [name for name in artists if artists[name].mbid == row[1]]
+        song_name = []
+        
+        if len(artist_name) > 0:
+            artist_name = artist_name[0]
+            song_name = [song.name for song in artists[artist_name].songs.values() if song.mbid == row[0]]
+            if len(song_name) > 0:
+                song_name = song_name[0]
+            else:
+                song_name = NA_VAL
+        else:
+            artist_name = NA_VAL
+        
+        # genres
+        genre_values = []
+        for i in range(len(row)-2-len(GENRES), len(row)-2):
+            genre_values.append(row[i])
+
+        genre_value_keys = {GENRES[i]: genre_values[i] for i in range(0, len(genre_values))}
+
+        row_data = {
+            "song_mbid": row[0],
+            "artist_mbid": row[1],
+            "song_name": song_name,
+            "artist_name": artist_name
+        }
+
+        row_data.update(genre_value_keys)
+
+        song_data.append(row_data)
+
+
+    # convert to pandas dataframe, sort by mbid, and return it
+    df_songs = pd.DataFrame(song_data)
+    df_songs.sort_values(by="song_mbid", inplace=True)
+    return df_songs
+
 # ----- Main -----
 
 def main():
@@ -508,6 +550,12 @@ def main():
     write_csv(song_train_ng, FO_GBS + "_train_no_genres.csv")
     write_csv(song_val_ng, FO_GBS + "_val_no_genres.csv")
     write_csv(song_test_ng, FO_GBS + "_test_no_genres.csv")
+
+    print(song_df.columns.values)
+
+    # make and write csv with just song id, artist id, song name, and artist name, then genre
+    artist_song_mbid_genres_df = make_artist_song_mbid_genres(artists, song_df, song_enc, artist_enc)
+    write_csv(artist_song_mbid_genres_df, FO_SONG_ARTIST_MBID_GENRE)
 
 if __name__ == "__main__":
     main()
