@@ -1,3 +1,7 @@
+'use client'
+
+import Link from 'next/link'
+
 export default function Home() {
   return (
     <div className="font-sans flex flex-col flex-1 justify-between min-h-full mt-8 sm:mt-10">
@@ -10,9 +14,12 @@ export default function Home() {
             Unlock your music map by signing in with your Last.fm account.
           </p>
         </div>
-        <button className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md">
+        <Link
+          href="/login"
+          className="inline-block mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+        >
           Start Your Personalized Experience
-        </button>
+        </Link>
       </div>
       <div className="text-center pb-4 sm:text-right sm:flex sm:justify-end sm:pr-4 md:pr-8">
         <p className="text-sm text-muted-foreground sm:w-100 md:w-100">

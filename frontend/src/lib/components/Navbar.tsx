@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "../providers/auth-store-provider";
+import { logoutUser } from "../../app/services/lastfm_user";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -17,17 +18,26 @@ export default function Navbar() {
   // Make Music Map the primary "home" landing page
   const navItems = [
     { href: "/music-map", label: "Home" },
-    { href: "/library", label: "Library" },
   ];
 
-  function signOut() {
+  async function signOut() {
+    try {
+      await logoutUser();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+
+    // Clear client-side state
     clearUser();
+
+    // Clear localStorage
     try {
       localStorage.removeItem("lastfm-store");
     } catch (e) {
       // ignore (server-side render or restricted storage)
     }
-    router.push("/music-map");
+
+    router.replace("/");
   }
 
   if (!isAuthenticated) {

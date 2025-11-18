@@ -1,17 +1,15 @@
 import secrets
 from urllib.parse import urlencode
 from django_ratelimit.decorators import ratelimit
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_http_methods
 from django.shortcuts import redirect
 from rest_framework.views import APIView
 from django.middleware.csrf import get_token
 from django.conf import settings
 from django.utils.decorators import method_decorator
-from django.shortcuts import render
-from django.core.cache import cache
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import get_user_model, login
+from django.contrib.auth import get_user_model, login, logout
 from .models import LastfmLinking
 from .songRecModel import musicRecommendationSystem
 
@@ -114,5 +112,8 @@ def csrfTokenView(request):
     token = get_token(request)
     return JsonResponse({'csrfToken': token})
 
-
-
+# Logout endpoint to properly clear Django session
+@require_http_methods(['POST'])
+def logout_view(request):
+    logout(request)
+    return JsonResponse({'success': True})

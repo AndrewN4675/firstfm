@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import lastfm_start, lastfm_callback, itsMe, csrfTokenView, RecommendationView
+from .views import lastfm_start, lastfm_callback, itsMe, csrfTokenView, RecommendationView, logout_view
 
 urlpatterns = [
     path('csrf/', csrfTokenView, name='csrf_token'),
@@ -7,4 +7,5 @@ urlpatterns = [
     path('lastfm/callback/', lastfm_callback, name='lastfm_callback'),
     path('itsme/', itsMe, name='its_me'),
     path('recommendation/', RecommendationView.as_view(), name='recommendation'),
+    path('logout/', logout_view, name='logout'),
 ]
