@@ -1,6 +1,6 @@
 # FirstFM
  
-add description
+FirstFM is a music discovery platform that turns users’ Last.fm listening data into personalized recommendations and interactive visual experiences. By connecting their Last.fm accounts, users can receive tailored music suggestions to their listening habits, explore genre relationships in an interactive 3D map, and view insights into their listening habits such as top artists, songs, and genres. As users continue to use FirstFM, users can visualize how their listening habits evolve over time helping them better understand and explore their listening tastes.
 
 ## Languages and Technologies
 
